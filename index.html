@@ -144,6 +144,58 @@
             pointer-events: none;
         }
 
+        /* Camera Status Indicator - Mobile Friendly */
+        #cam-status {
+            position: absolute;
+            top: 10px;
+            left: 10px; /* Top left corner */
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        #cam-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ffd700; /* Initial: Yellow/Checking */
+            box-shadow: 0 0 8px #ffd700;
+            animation: pulse-status 1.5s infinite;
+        }
+
+        #cam-text {
+            color: #fff;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @keyframes pulse-status {
+            0% { opacity: 0.6; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* Status Colors */
+        .status-active #cam-indicator {
+            background-color: #00ff00 !important;
+            box-shadow: 0 0 10px #00ff00 !important;
+        }
+        .status-error #cam-indicator {
+            background-color: #ff0000 !important;
+            box-shadow: 0 0 10px #ff0000 !important;
+            animation: none !important;
+        }
+
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             h1 {
@@ -207,6 +259,12 @@
     </div>
 
     <div id="canvas-container"></div>
+
+    <!-- Camera Status for Mobile/Desktop -->
+    <div id="cam-status">
+        <div id="cam-indicator"></div>
+        <div id="cam-text">Checking Camera...</div>
+    </div>
 
     <div id="ui-layer">
         <h1>BIN NA RECAP 2025</h1>
@@ -755,13 +813,34 @@
                     video.srcObject = stream;
                     video.addEventListener("loadeddata", predictWebcam);
                     debugInfo.innerText = "Webcam active. Show hand.";
+                    
+                    // Update Status to Active
+                    updateCameraStatus('active', 'Camera Active');
                 } catch(e) {
                     console.warn("Webcam access denied or not available", e);
                     debugInfo.innerText = "Camera error: " + e.message;
                     document.getElementById('webcam-wrapper').style.display = 'none';
+
+                    // Update Status to Error
+                    updateCameraStatus('error', 'Camera Denied/Error');
                 }
+            } else {
+                 updateCameraStatus('error', 'Camera Not Supported');
             }
         }
+        
+        function updateCameraStatus(state, message) {
+            const statusEl = document.getElementById('cam-status');
+            const indicatorEl = document.getElementById('cam-indicator');
+            const textEl = document.getElementById('cam-text');
+            
+            statusEl.className = ''; // Reset classes
+            if (state === 'active') statusEl.classList.add('status-active');
+            if (state === 'error') statusEl.classList.add('status-error');
+            
+            textEl.innerText = message;
+        }
+
 
         let lastVideoTime = -1;
         async function predictWebcam() {
